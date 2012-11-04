@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.HashMap;
 
@@ -129,6 +130,29 @@ public class Utility {
 					value.toString() +
 					Message.EOL);
 	}
-	
 
+	private static void setField(Message msg, String str) {
+		String[] strs = str.split(":");
+		strs[1] = strs[1].trim();
+		
+		if(strs[0].equals("Host")) {
+			msg.setHost(strs[1]);
+		} else if(strs[0].equals("Port")) {
+			msg.setPort( Integer.valueOf(strs[1]) );
+		} else if(strs[0].equals("Title")) {
+			msg.setTitle(strs[1]);
+		}
+	}
+	
+	public static void read_fields(Message msg, InputStream inputStream) throws IOException {
+		int num_fields = readInterger(inputStream);
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+		
+		for(int i=0;i<num_fields;++i) {
+			String str = br.readLine();
+			setField(msg, str);
+		}
+		
+	}
 }

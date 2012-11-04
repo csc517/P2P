@@ -17,7 +17,9 @@ public class AddRFCMessage implements Message {
 		this.msg_type = msg_type;
 	}
 
-	public AddRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) {
+	public AddRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
+		Utility.read_fields(this, inputStream);
+		//read_data
 	}
 
 	@Override
@@ -93,6 +95,12 @@ public class AddRFCMessage implements Message {
 	}
 
 	@Override
+	public String toString() {
+		return "AddRFCMessage [port=" + port + ", host=" + host + ", title="
+				+ title + ", data=" + data + ", msg_type=" + msg_type + "]";
+	}
+
+	@Override
 	public void send(Socket socket) {
 		StringBuffer buf = new StringBuffer();
 		
@@ -104,7 +112,8 @@ public class AddRFCMessage implements Message {
 					DELIMITER +
 					VERSION +
 					EOL);
-		
+	
+		buf.append(3);	//write number of fields
 		Utility.add_field(buf, "Host", this.getHost());
 		Utility.add_field(buf, "Port", this.getPort());
 		Utility.add_field(buf, "Title", this.getTitle());

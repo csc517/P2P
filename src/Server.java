@@ -13,7 +13,12 @@ public class Server extends Thread {
 	}
 	
 	public void run() {
-		
+		try {
+			Message msg = Utility.parseMessage(clientSocket);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 	}
 
 	/**

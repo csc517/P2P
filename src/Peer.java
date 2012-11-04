@@ -16,6 +16,7 @@ public class Peer extends Thread {
 			try {
 				incomingSocket = serverSocket.accept();
 				Message msg = Utility.parseMessage(incomingSocket);
+				System.out.println(msg);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

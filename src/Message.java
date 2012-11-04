@@ -26,6 +26,6 @@ public interface Message {
 	
 	Utility.MSG_TYPE getType();
 	
-	void send(Socket connectSocket);
+	void send(Socket socket);
 
 }

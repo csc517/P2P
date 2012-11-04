@@ -42,6 +42,17 @@ public class Peer extends Thread {
 			msg.setData("123");
 			
 			msg.send(connectSocket);
+			
+			
+			msg = Utility.createMessage(Utility.MSG_TYPE.GET);
+			
+			msg.setHost("");
+			msg.setOS(System.getProperty("os.name") + " " +
+					System.getProperty("os.version") + " " +
+					System.getProperty("os.arch"));
+			
+			msg.send(connectSocket);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

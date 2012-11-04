@@ -33,18 +33,6 @@ public class AddRFCMessage implements Message {
 	}
 
 	@Override
-	public void setOS(String os) {	
-	}
-
-	@Override
-	public void setContentType(String content_type) {
-	}
-
-	@Override
-	public void setContentLength(int length) {
-	}
-
-	@Override
 	public void setTitle(String title) {
 		this.title = title;
 	}
@@ -55,23 +43,8 @@ public class AddRFCMessage implements Message {
 	}
 
 	@Override
-	public int getContentLength() {
-		return 0;
-	}
-
-	@Override
-	public String getContentType() {
-		return null;
-	}
-
-	@Override
 	public String getHost() {
 		return this.host;
-	}
-
-	@Override
-	public String getOS() {
-		return null;
 	}
 
 	@Override
@@ -125,5 +98,32 @@ public class AddRFCMessage implements Message {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}				
+	}
+	
+	@Override
+	public String getOS() {
+		return null;
+	}
+
+	@Override
+	public void setOS(String os) {	
+	}
+
+	@Override
+	public void setContentType(String content_type) {
+	}
+
+	@Override
+	public void setContentLength(int length) {
+	}
+	
+	@Override
+	public int getContentLength() {
+		return 0;
+	}
+
+	@Override
+	public String getContentType() {
+		return null;
 	}
 }

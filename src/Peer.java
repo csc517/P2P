@@ -33,7 +33,7 @@ public class Peer extends Thread {
 			
 			Socket connectSocket = new Socket(serverHost, serverPort);
 			
-			Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD, "P2P-CI/1.0");
+			Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
 			
 			msg.setPort(serverSocket.getLocalPort());
 			msg.setHost(serverSocket.getInetAddress().getHostName());

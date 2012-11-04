@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -10,12 +11,13 @@ public class AddRFCMessage implements Message {
 	String host;
 	String title;
 	String data;
-	String version;
 	Utility.MSG_TYPE msg_type;
 	
-	public AddRFCMessage(Utility.MSG_TYPE msg_type, String version) {
+	public AddRFCMessage(Utility.MSG_TYPE msg_type) {
 		this.msg_type = msg_type;
-		this.version = version;
+	}
+
+	public AddRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) {
 	}
 
 	@Override
@@ -103,9 +105,9 @@ public class AddRFCMessage implements Message {
 					VERSION +
 					EOL);
 		
-		add_field(buf, "Host", this.getHost());
-		add_field(buf, "Port", this.getPort());
-		add_field(buf, "Title", this.getTitle());
+		Utility.add_field(buf, "Host", this.getHost());
+		Utility.add_field(buf, "Port", this.getPort());
+		Utility.add_field(buf, "Title", this.getTitle());
 		
 		try {
 			PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
@@ -114,13 +116,5 @@ public class AddRFCMessage implements Message {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}				
-	}
-
-	private void add_field(StringBuffer buf, String field, Object value) {
-		buf.append( field +
-				    ":" +
-					DELIMITER +
-					value.toString() +
-					EOL);
 	}
 }

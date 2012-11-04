@@ -3,9 +3,10 @@ import java.net.Socket;
 
 
 public interface Message {
-	String VERSION = "P2P-CI/1.0";
-	String DELIMITER = " ";
-	String EOL = "\r\n";
+	static String VERSION = "P2P-CI/1.0";
+	static String DELIMITER = " ";
+	static String EOL = "\r\n";
+	static int INT_LEN = 4;
 	
 	void setHost(String host);
 	void setPort(int port);

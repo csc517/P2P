@@ -141,6 +141,16 @@ public class Utility {
 			msg.setPort( Integer.valueOf(strs[1]) );
 		} else if(strs[0].equals("Title")) {
 			msg.setTitle(strs[1]);
+		} else if(strs[0].equals("Date")) {
+//			msg.set(strs[1]);
+		} else if(strs[0].equals("OS")) {
+			msg.setOS(strs[1]);
+		} else if(strs[0].equals("Last Modified")) {
+//			msg.setTitle(strs[1]);
+		} else if(strs[0].equals("Content Length")) {
+			msg.setContentLength(Integer.valueOf(strs[1]));
+		} else if(strs[0].equals("Content Type")) {
+			msg.setContentType(strs[1]);
 		}
 	}
 	

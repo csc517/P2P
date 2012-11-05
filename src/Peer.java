@@ -19,13 +19,14 @@ public class Peer extends Thread {
 
 				switch(msg.getType()) {
 				case GET:
+					//send peer response
 					//send the file to requesting host
 					break;
 				case ADD:
 				case LOOKUP:
 				case LIST:
 					break;
-				default:	//response
+				default:	//response from server
 
 				}
 				System.out.println(msg);

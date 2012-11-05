@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -13,6 +14,10 @@ public class ListRFCMessage implements Message {
 
 	public ListRFCMessage(Utility.MSG_TYPE msg_type) {
 		this.msg_type = msg_type;
+	}
+
+	public ListRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
+		Utility.read_fields(this, inputStream);
 	}
 
 	@Override

@@ -1,8 +1,12 @@
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.io.*;
 
 
@@ -51,6 +55,7 @@ public class Server extends Thread {
 					//buf.append(Message.EOL);
 					ResponseRFCMessage response = new ResponseRFCMessage(ResponseRFCMessage.RESPONSE_TYPE.OK);
 					response.setResponseContent(buf);
+					response.sendServerResponse(this.clientSocket);
 					
 				}
 				else {
@@ -59,9 +64,27 @@ public class Server extends Thread {
 				}
 				break;
 			case LIST:
-				return new ListRFCMessage(msg_type, inputStream);
-			//case  RESPONSE:
-			//	return new ResponseRFCMessage(msg_type, inputStream);
+				Set<Entry<Integer, ArrayList<PeerInfo>>> entries = Server.map.entrySet();
+				Iterator<Entry<Integer, ArrayList<PeerInfo>>> entriesIterator = entries.iterator();
+				StringBuffer buf = new StringBuffer();
+				while(entriesIterator.hasNext())
+				{
+					
+					Map.Entry<Integer, ArrayList<PeerInfo>> entry = entriesIterator.next();
+					Iterator<PeerInfo> arrayListIterator = entry.getValue().iterator();
+					while(arrayListIterator.hasNext())
+					{
+						buf.append("RFC" + 
+								Message.DELIMITER +
+								entry.getKey() +
+								Message.DELIMITER +
+								arrayListIterator.next().getRFCInfoString());
+					}
+				}
+				ResponseRFCMessage response = new ResponseRFCMessage(ResponseRFCMessage.RESPONSE_TYPE.OK);
+				response.setResponseContent(buf);
+				response.sendServerResponse(this.clientSocket);
+
 			default: 
 				return null;
 			}

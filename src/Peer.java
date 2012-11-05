@@ -16,6 +16,18 @@ public class Peer extends Thread {
 			try {
 				incomingSocket = serverSocket.accept();
 				Message msg = Utility.parseMessage(incomingSocket);
+
+				switch(msg.getType()) {
+				case GET:
+					//send the file to requesting host
+					break;
+				case ADD:
+				case LOOKUP:
+				case LIST:
+					break;
+				default:	//response
+
+				}
 				System.out.println(msg);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -35,24 +47,24 @@ public class Peer extends Thread {
 			Socket connectSocket = new Socket(serverHost, serverPort);
 			
 			Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
-			
 			msg.setPort(serverSocket.getLocalPort());
 			msg.setHost(serverSocket.getInetAddress().getHostName());
 			msg.setTitle("RFC");
 			msg.setData("123");
-			
 			msg.send(connectSocket);
-			
-			
+
 			msg = Utility.createMessage(Utility.MSG_TYPE.GET);
-			
 			msg.setHost("");
 			msg.setOS(System.getProperty("os.name") + " " +
 					System.getProperty("os.version") + " " +
 					System.getProperty("os.arch"));
-			
 			msg.send(connectSocket);
 			
+			msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
+			msg.setPort(serverSocket.getLocalPort());
+			msg.setHost(serverSocket.getInetAddress().getHostName());
+			msg.send(connectSocket);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

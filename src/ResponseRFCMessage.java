@@ -12,12 +12,10 @@ import Utility.MSG_TYPE;
 
 public class ResponseRFCMessage implements Message {
 	
-	Utility.MSG_TYPE msg_type;
 	int contentLength;
 	String contentType;
 	Calendar date;
-
-
+	StringBuffer responseContent;
 	Calendar lastModified;
 	String data;
 	RESPONSE_TYPE responseType;
@@ -50,8 +48,8 @@ public class ResponseRFCMessage implements Message {
 	}
 	
 	
-	public ResponseRFCMessage(Utility.MSG_TYPE msg_type) {
-		this.msg_type = msg_type;
+	public ResponseRFCMessage(RESPONSE_TYPE response_type) {
+		this.responseType = response_type;
 	}
 	
 	
@@ -77,6 +75,13 @@ public class ResponseRFCMessage implements Message {
 		
 	}
 	
+	public StringBuffer getResponseContent() {
+		return responseContent;
+	}
+
+	public void setResponseContent(StringBuffer responseContent) {
+		this.responseContent = responseContent;
+	}	
 	public Calendar getLastModified() {
 		return lastModified;
 	}
@@ -140,7 +145,7 @@ public class ResponseRFCMessage implements Message {
 		
 		if(this.responseType == RESPONSE_TYPE.OK)
 		{
-			
+			buf.append(this.getResponseContent());
 		}
 		try {
 			PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);

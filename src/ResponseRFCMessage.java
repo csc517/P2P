@@ -7,7 +7,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
-import Utility.MSG_TYPE;
 
 
 public class ResponseRFCMessage implements Message {
@@ -19,34 +18,7 @@ public class ResponseRFCMessage implements Message {
 	Calendar lastModified;
 	String data;
 	RESPONSE_TYPE responseType;
-	
-	public class Status {
-		int statusCode;
-		String message;
-			
-		public Status(int statusCode, String message) {
-			this.statusCode = statusCode;
-			this.message = message;
-		}
-		
-		public int getStatusCode() {
-			return statusCode;
-		}
 
-		public void setStatusCode(int statusCode) {
-			this.statusCode = statusCode;
-		}
-
-		public String getMessage() {
-			return message;
-		}
-
-		public void setMessage(String message) {
-			this.message = message;
-		}
-
-	}
-	
 	
 	public ResponseRFCMessage(RESPONSE_TYPE response_type) {
 		this.responseType = response_type;
@@ -59,7 +31,7 @@ public class ResponseRFCMessage implements Message {
 		private static HashMap<RESPONSE_TYPE, Status> map;
 		static {
 			map = new HashMap<RESPONSE_TYPE, Status>();
-			RESPONSE_TYPE type;
+			RESPONSE_TYPE type = null;
 			map.put(type.OK, new Status(200, "OK"));
 			map.put(type.BAD_REQ, new Status(400, "Bad Request"));
 			map.put(type.NOT_FOUND, new Status(404, "Not Found"));
@@ -181,6 +153,60 @@ public class ResponseRFCMessage implements Message {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+	}
+
+	@Override
+	public void setHost(String host) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setPort(int port) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setTitle(String title) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int getPort() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public String getHost() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getTitle() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getData() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Utility.MSG_TYPE getType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void send(Socket socket) {
+		// TODO Auto-generated method stub
 		
 	}
 

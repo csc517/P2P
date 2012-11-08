@@ -13,6 +13,8 @@ public interface Message {
 	void setOS(String os);
 	void setContentType(String content_type);
 	void setContentLength(int length);
+	void setRFCnum(String RFCnum);
+	
 	void setTitle(String title);
 	void setData(String data);
 	
@@ -27,5 +29,6 @@ public interface Message {
 	Utility.MSG_TYPE getType();
 	
 	void send(Socket socket);
+	
 
 }

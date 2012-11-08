@@ -86,7 +86,7 @@ public class Server extends Thread {
 				response.sendServerResponse(this.clientSocket);
 
 			default: 
-				return null;
+				return;
 			}
 			
 			

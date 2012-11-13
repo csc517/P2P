@@ -9,6 +9,7 @@ public class GetRFCMessage implements Message {
 	String host;
 	String os;
 	String data;
+	int rfcNumber; 
 
 	public GetRFCMessage(Utility.MSG_TYPE msg_type) {
 		this.msg_type = msg_type;
@@ -113,7 +114,7 @@ public class GetRFCMessage implements Message {
 				DELIMITER +
 				"RFC" +
 				DELIMITER +
-				this.data +
+				this.rfcNumber +
 				DELIMITER +
 				VERSION +
 				EOL);
@@ -129,6 +130,11 @@ public class GetRFCMessage implements Message {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void setRFCNumber(int rfcNumber) {
+		this.rfcNumber = rfcNumber;
 	}
 
 }

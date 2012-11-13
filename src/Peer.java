@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,6 +12,8 @@ import java.util.Iterator;
 public class Peer extends Thread {
 
 	ServerSocket serverSocket = null;
+	
+	static Object waitObject = new Object();
 
 	public Peer(ServerSocket serverSocket) {
 		this.serverSocket = serverSocket;
@@ -31,6 +37,9 @@ public class Peer extends Thread {
 				case LIST:
 					break;
 				default:	//response from server
+					synchronized (Peer.waitObject) {
+						Peer.waitObject.notify();
+					}
 
 				}
 				System.out.println(msg);
@@ -50,39 +59,87 @@ public class Peer extends Thread {
 			String serverHost = "localhost";
 
 			Socket connectSocket = new Socket(serverHost, serverPort);
+			
 			//after connecting to the server loop through the local files
 			//and send add for each of them
 			ArrayList<String> files = Utility.textFiles();
 			Iterator<String> it = files.iterator();
+			
 			while(it.hasNext()) {
+				
+				File file = new File(it.next());
+				BufferedReader fileReader = new BufferedReader(new FileReader(file));
+				
+				String firstLine = fileReader.readLine();
+				String[] firstLineArr = firstLine.split(" ");
+				
+				int rfcNumber = Integer.parseInt(firstLineArr[1]);
+				String rfcTitle = firstLineArr[2];
+				
 				Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
 				msg.setPort(serverSocket.getLocalPort());
 				msg.setHost(serverSocket.getInetAddress().getHostName());
-				msg.setRFCnum("RFC" + it.next());
-				msg.setTitle("RFC blah blah");
+				msg.setRFCNumber(rfcNumber);
+				msg.setTitle(rfcTitle);
 				msg.send(connectSocket);
-
-				//receive response only if response is OK continue
+				
+				synchronized (Peer.waitObject) {
+					//wait for the response from the server
+					Peer.waitObject.wait();
+				}
 
 			}
-
-			Message msg = Utility.createMessage(Utility.MSG_TYPE.GET);
-			msg.setHost("");
-			msg.setOS(System.getProperty("os.name") + " " +
-					System.getProperty("os.version") + " " +
-					System.getProperty("os.arch"));
-			msg.send(connectSocket);
-
-			msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
-			msg.setPort(serverSocket.getLocalPort());
-			msg.setHost(serverSocket.getInetAddress().getHostName());
-			msg.send(connectSocket);			
-
-
-
+			
+			Console console = System.console();
+			while(true) {
+				String consoleLine = console.readLine();
+				String [] consoleLinesArr = consoleLine.split(" ");
+				
+				if(consoleLinesArr[0].equals("GET")) {
+					
+					//GET RFC <RFC_NUMBER>
+					int rfcNumber = Integer.parseInt(consoleLinesArr[2]);
+					
+					Message msg = Utility.createMessage(Utility.MSG_TYPE.GET);
+					msg.setHost("");
+					msg.setOS(System.getProperty("os.name") + " " +
+							System.getProperty("os.version") + " " +
+							System.getProperty("os.arch"));
+					msg.setRFCNumber(rfcNumber);
+					msg.send(connectSocket);
+				
+				} else if (consoleLinesArr[0].equals("ADD")) {
+				
+					//ADD RFC <RFC_NUMBER> <title>
+					int rfcNumber = Integer.parseInt(consoleLinesArr[2]);
+					String rfcTitle = consoleLinesArr[3];
+					
+					Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
+					msg.setPort(serverSocket.getLocalPort());
+					msg.setHost(serverSocket.getInetAddress().getHostName());
+					msg.setRFCNumber(rfcNumber);
+					msg.setTitle(rfcTitle);
+					msg.send(connectSocket);
+					
+					synchronized (Peer.waitObject) {
+						//wait for the response from the server
+						Peer.waitObject.wait();
+					}
+				
+				} else if(consoleLinesArr[0].equalsIgnoreCase("LIST")) {
+				
+					//LIST RFC
+					Message msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
+					msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
+					msg.setPort(serverSocket.getLocalPort());
+					msg.setHost(serverSocket.getInetAddress().getHostName());
+					msg.send(connectSocket);
+					
+				}
+			}
 		}
 		catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
 }

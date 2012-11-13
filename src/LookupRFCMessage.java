@@ -122,4 +122,10 @@ public class LookupRFCMessage implements Message {
 		}
 	}
 
+	@Override
+	public void setRFCNumber(int rfcNumber) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

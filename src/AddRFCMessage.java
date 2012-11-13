@@ -11,6 +11,7 @@ public class AddRFCMessage implements Message {
 	String host;
 	String title;
 	String data;
+	int rfcNumber;
 	Utility.MSG_TYPE msg_type;
 	
 	public AddRFCMessage(Utility.MSG_TYPE msg_type) {
@@ -125,5 +126,10 @@ public class AddRFCMessage implements Message {
 	@Override
 	public String getContentType() {
 		return null;
+	}
+
+	@Override
+	public void setRFCNumber(int rfcNumber) {
+		this.rfcNumber = rfcNumber;		
 	}
 }

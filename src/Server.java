@@ -1,9 +1,7 @@
 import java.net.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -13,7 +11,8 @@ import java.io.*;
 
 public class Server extends Thread {
 	
-	public static HashMap<Integer,ArrayList<PeerInfo>> map = new HashMap<Integer, ArrayList<PeerInfo>>();
+	public static HashMap<Integer,ArrayList<PeerInfo>> map = 
+			new HashMap<Integer, ArrayList<PeerInfo>>();
 	
 	Socket clientSocket;
 
@@ -22,110 +21,130 @@ public class Server extends Thread {
 	}
 	
 	public void run() {
-		try {
-			Message msg = Utility.parseMessage(clientSocket);
-			switch(msg.getType()) {
-			case ADD:
-				synchronized (Server.map) {
-					ArrayList<PeerInfo> list = Server.map.get(Integer.valueOf(msg.getData()));
-					PeerInfo peerinfo = new PeerInfo(msg.getPort(),
-							msg.getHost(), msg.getTitle());
-					if (null == list) {
-						ArrayList<PeerInfo> arr = new ArrayList<PeerInfo>();
-						arr.add(peerinfo);
-						Server.map.put(Integer.valueOf(msg.getData()), arr);
-					} else {
-						list.add(peerinfo);
+		while (true) {
+			try {
+				Message msg = Utility.parseMessage(clientSocket);
+				msg.readMessage();
+
+				switch (msg.getType()) {
+				case ADD:
+					synchronized (Server.map) {
+						ArrayList<PeerInfo> list = Server.map.get(msg
+								.getRFCNumber());
+
+						PeerInfo peerinfo = new PeerInfo(msg.getPort(),
+								msg.getHost(), msg.getTitle());
+						System.out.println(peerinfo);
+
+						if (null == list) {
+							ArrayList<PeerInfo> arr = new ArrayList<PeerInfo>();
+							arr.add(peerinfo);
+							Server.map.put(msg.getRFCNumber(), arr);
+						} else {
+							list.add(peerinfo);
+						}
 					}
-				}
-				break;
-			case LOOKUP:
-				ArrayList<PeerInfo> list = Server.map.get(Integer.valueOf(msg.getData()));
-				if(null != list) {
-					Iterator<PeerInfo> itr = list.iterator();
-					StringBuffer buf = new StringBuffer();				
-					while(itr.hasNext())
-					{
-						buf.append("RFC" + 
-								Message.DELIMITER +
-								msg.getData() +
-								Message.DELIMITER +
-								itr.next().getRFCInfoString());
-					}
-					//buf.append(Message.EOL);
-					ResponseRFCMessage response = new ResponseRFCMessage(ResponseRFCMessage.RESPONSE_TYPE.OK);
+
+					ResponseRFCMessage response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
+					
+					StringBuffer buf = new StringBuffer();
+					
+					buf.append(0 + Message.EOL);
+					
 					response.setResponseContent(buf);
 					response.sendServerResponse(this.clientSocket);
 					
-				}
-				else {
-					//send not found
-					ResponseRFCMessage response = new ResponseRFCMessage(ResponseRFCMessage.RESPONSE_TYPE.NOT_FOUND);
-				}
-				break;
-			case LIST:
-				Set<Entry<Integer, ArrayList<PeerInfo>>> entries = Server.map.entrySet();
-				Iterator<Entry<Integer, ArrayList<PeerInfo>>> entriesIterator = entries.iterator();
-				StringBuffer buf = new StringBuffer();
-				while(entriesIterator.hasNext())
-				{
+					System.out.println("Sent response for ADD...");
 					
-					Map.Entry<Integer, ArrayList<PeerInfo>> entry = entriesIterator.next();
-					Iterator<PeerInfo> arrayListIterator = entry.getValue().iterator();
-					while(arrayListIterator.hasNext())
-					{
-						buf.append("RFC" + 
-								Message.DELIMITER +
-								entry.getKey() +
-								Message.DELIMITER +
-								arrayListIterator.next().getRFCInfoString());
+					break;
+				case LOOKUP:
+					StringBuffer lookupResBuf = new StringBuffer();
+					lookupResBuf.append(1 + Message.EOL);
+					
+					ResponseRFCMessage lookupResponse = null;
+					
+					ArrayList<PeerInfo> list = Server.map.get(msg.getRFCNumber());
+					
+					if (null != list) {
+						Iterator<PeerInfo> itr = list.iterator();
+						while (itr.hasNext()) {
+							lookupResBuf.append("RFC" + Message.DELIMITER
+									+ msg.getRFCNumber() + Message.DELIMITER
+									+ itr.next().getRFCInfoString());
+						}
+						
+//						lookupResBuf.append(Message.EOL);
+						lookupResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
+						
+					} else {	//send not found
+						lookupResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
 					}
-				}
-				ResponseRFCMessage response = new ResponseRFCMessage(ResponseRFCMessage.RESPONSE_TYPE.OK);
-				response.setResponseContent(buf);
-				response.sendServerResponse(this.clientSocket);
+					
+					lookupResponse.setResponseContent(lookupResBuf);
+					lookupResponse.sendServerResponse(this.clientSocket);
+					
+					System.out.println("Sent response for LOOKUP...");
+					break;
+				case LIST:
+					Set<Entry<Integer, ArrayList<PeerInfo>>> entries = Server.map
+							.entrySet();
+					Iterator<Entry<Integer, ArrayList<PeerInfo>>> entriesIterator = entries
+							.iterator();
+					StringBuffer listResBuf = new StringBuffer();
+					while (entriesIterator.hasNext()) {
 
-			default: 
-				return;
+						Map.Entry<Integer, ArrayList<PeerInfo>> entry = entriesIterator
+								.next();
+						Iterator<PeerInfo> arrayListIterator = entry.getValue()
+								.iterator();
+						while (arrayListIterator.hasNext()) {
+							listResBuf.append("RFC"
+									+ Message.DELIMITER
+									+ entry.getKey()
+									+ Message.DELIMITER
+									+ arrayListIterator.next()
+											.getRFCInfoString());
+						}
+					}
+					ResponseRFCMessage listResponse = new ResponseRFCMessage(
+							Utility.RESPONSE_TYPE.OK);
+					listResponse.setResponseContent(listResBuf);
+					listResponse.sendServerResponse(this.clientSocket);
+
+				default:
+					return;
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+				break;
 			}
-			
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}		
 	}
 
 	
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		int port;
-		String hostName;
+		int serverPort = Utility.serverPort;
+		
 		ServerSocket serverSocket = null;
 		Socket clientSocket = null;
-		port = 1234;
+		
 		try {
-			serverSocket = new ServerSocket(port);
-
+			serverSocket = new ServerSocket(serverPort);
 		}
 		catch(IOException e) {
-			System.out.println("Error listening on port");
+			System.out.println("Error listening on port: " + serverPort);
 			System.exit(-1);
 		}	
-		while(true)
-		{
+		Utility.MSG_TYPE mt = Utility.MSG_TYPE.ADD; 
+		while(true)	{
 			try {
+				System.out.println("Waiting for incoming connection...");
 				clientSocket = serverSocket.accept();	
 			} catch(IOException e) {
 				System.out.println("error accepting the connection");
 			}
-			new Server(clientSocket).start();
-			
+			new Server(clientSocket).start();			
 		}
-
 	}
-	
-
-	
-
 }

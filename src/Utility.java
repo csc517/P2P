@@ -1,7 +1,5 @@
-import java.awt.List;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,15 +10,42 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.sun.corba.se.impl.ior.ByteBuffer;
+
 
 public class Utility {
+	static int serverPort = 12345;
+	
+	public enum RESPONSE_TYPE {
+		OK, BAD_REQ, NOT_FOUND, VERSION_UNSUPPORTED;
+		
+		private static HashMap<RESPONSE_TYPE, Status> map;
+		static {
+			map = new HashMap<RESPONSE_TYPE, Status>();
+			map.put(RESPONSE_TYPE.OK, new Status(200, "OK"));
+			map.put(RESPONSE_TYPE.BAD_REQ, new Status(400, "Bad Request"));
+			map.put(RESPONSE_TYPE.NOT_FOUND, new Status(404, "Not Found"));
+			map.put(RESPONSE_TYPE.VERSION_UNSUPPORTED, new Status(505, "P2P-CI Version Not Supported"));
+		}
+		
+		public static String getResponseString(RESPONSE_TYPE responseType) {
+			Status status = map.get(responseType);
+			return(status.getStatusCode() + " " + status.getMessage());
+			
+			
+		}
+		
+	}
+	
 	public enum MSG_TYPE {
 		GET, ADD, LOOKUP, LIST, RESPONSE;
 
 		private static HashMap<Integer, MSG_TYPE> map;
 		static {
 			map = new HashMap<Integer, MSG_TYPE>();
+			System.out.println("creating map...");
 			for (MSG_TYPE type: MSG_TYPE.values()) {
+				System.out.println("Adding " + type.ordinal() + ":"+type);
 				map.put(type.ordinal(), type);
 			}
 		}
@@ -44,8 +69,6 @@ public class Utility {
 			return new LookupRFCMessage(msg_type);
 		case LIST:
 			return new ListRFCMessage(msg_type);
-		case  RESPONSE:
-			return new ResponseRFCMessage(msg_type);
 		default: 
 			return null;
 		}
@@ -53,8 +76,12 @@ public class Utility {
 
 	public static Message parseMessage(Socket incomingSocket) throws IOException {
 		InputStream inputStream = incomingSocket.getInputStream();
+		
+		System.out.println("Trying to read msg type...");
 
-		int msg_type_int = readInterger(inputStream);
+		int msg_type_int = readInteger(inputStream);
+		
+		System.out.println("MSG_TYPE: "+ msg_type_int);
 
 		MSG_TYPE msg_type = MSG_TYPE.getType(msg_type_int);
 
@@ -104,29 +131,44 @@ public class Utility {
 	 * @return int read from input stream
 	 * @throws IOException
 	 */
-	private static int readInterger(InputStream inputStream) throws IOException {
+	private static int readInteger(InputStream inputStream) throws IOException {
 		byte[] buf = new byte[Message.INT_LEN];	//read an integer to determine the type of message
 
 		readBytes(inputStream, buf, Message.INT_LEN);
 
-		//convert byte array to integer
+		int final_read_int = 0;
 		int read_int = 0;
 
-		read_int = read_int | buf[0];
-		read_int = read_int << 8;
+		final_read_int = final_read_int | buf[0];
 
-		read_int = read_int | buf[1];
+		read_int = buf[1];
 		read_int = read_int << 8;
+		final_read_int = final_read_int | read_int;
+		
+		read_int = buf[2];
+		read_int = read_int << 16;
+		final_read_int = final_read_int | read_int;
 
-		read_int = read_int | buf[2];
-		read_int = read_int << 8;
-
-		read_int = read_int | buf[3];
+		read_int = buf[3];
+		read_int = read_int << 24;
+		final_read_int = final_read_int | read_int;
 
 		/*DataInputStream dis = new DataInputStream(inputStream);
 		return dis.readInt();*/
 
-		return read_int;
+		return final_read_int;
+	}
+	
+	public static void writeInteger(Socket socket, int writeInt) throws IOException {
+		System.out.println("Writing integer: "+writeInt);
+		ByteBuffer integerBuffer = new ByteBuffer(Message.INT_LEN);
+		integerBuffer.append(writeInt);
+		for(int i=integerBuffer.size()-1;i>=0;--i) {
+			System.out.print(integerBuffer.toArray()[i] + " ");
+		}
+		System.out.println();
+		socket.getOutputStream().write(integerBuffer.toArray());
+		socket.getOutputStream().flush();
 	}
 
 	public static void add_field(StringBuffer buf, String field, Object value) {
@@ -161,10 +203,13 @@ public class Utility {
 	}
 
 	public static void read_fields(Message msg, InputStream inputStream) throws IOException {
-		int num_fields = readInterger(inputStream);
-
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-
+		System.out.println("Reading number of fields...");
+		
+		BufferedReader br = msg.getBufferedReader();
+		
+		int num_fields = Integer.valueOf(br.readLine());
+		System.out.println("Number of fields: "+num_fields);
+		
 		for(int i=0;i<num_fields;++i) {
 			String str = br.readLine();
 			setField(msg, str);
@@ -192,18 +237,17 @@ public class Utility {
 
 	}
 
-	public static ArrayList<String> textFiles() {
-		  //change the below line to add custom dir path
-		  String directory = null;
-		  ArrayList<String> textFiles = new ArrayList<String>();
-		  File dir = new File(directory);
-		  for (File file : dir.listFiles()) {
-		    if (file.getName().endsWith((".txt"))) {
-		      textFiles.add(file.getName());
-		    }
+	public static ArrayList<String> textFiles(String directory) {
+		  ArrayList<String> textFiles = new ArrayList<String>();		  
+		  if(null != directory) {
+			  File dir = new File(directory);
+			  for (File file : dir.listFiles()) {
+				  if (file.getName().endsWith((".txt"))) {
+					  textFiles.add(file.getName());
+				  }
+			  }
 		  }
 		  return textFiles;
 	}
-	
 	
 }

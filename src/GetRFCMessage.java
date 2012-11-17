@@ -1,5 +1,7 @@
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -9,14 +11,25 @@ public class GetRFCMessage implements Message {
 	String host;
 	String os;
 	String data;
-	int rfcNumber; 
+	int rfcNumber;
+	InputStream inputStream = null;
+	BufferedReader br = null;
 
 	public GetRFCMessage(Utility.MSG_TYPE msg_type) {
 		this.msg_type = msg_type;
 	}
 
 	public GetRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
-		Utility.read_fields(this, inputStream);
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+		this.br = br;
+		this.msg_type = Utility.MSG_TYPE.GET;
+		this.inputStream = inputStream;		
+	}
+
+	@Override
+	public void readMessage() throws IOException {
+		String[] str = br.readLine().split(" ");
+		this.rfcNumber = Integer.valueOf(str[1]);
 	}
 
 	@Override
@@ -107,34 +120,44 @@ public class GetRFCMessage implements Message {
 	}
 
 	@Override
-	public void send(Socket socket) {
+	public void send(Socket socket) throws IOException {
 		StringBuffer buf = new StringBuffer();
+		
+		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+		
+		Utility.writeInteger(socket, this.msg_type.ordinal());
 
-		buf.append( this.msg_type +
-				DELIMITER +
-				"RFC" +
+		buf.append( "RFC" +
 				DELIMITER +
 				this.rfcNumber +
 				DELIMITER +
 				VERSION +
 				EOL);
-
-		buf.append(2);	//write number of fields
-		Utility.add_field(buf, "Host", this.getHost());
-		Utility.add_field(buf, "OS", this.getOS());
-
-		try {
-			PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
-			pw.print(buf);
-			pw.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
+		System.out.print("writing buffer:"+ buf.toString());
+		
+		pw.print(buf);
+		pw.flush();
 	}
 
 	@Override
 	public void setRFCNumber(int rfcNumber) {
 		this.rfcNumber = rfcNumber;
+	}
+
+	@Override
+	public int getRFCNumber() {
+		return this.rfcNumber;
+	}
+
+	@Override
+	public void setBufferedReader(BufferedReader br) {
+		this.br = br;
+	}
+
+	@Override
+	public BufferedReader getBufferedReader() {
+		return this.br;
 	}
 
 }

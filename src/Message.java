@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.net.Socket;
 
 
@@ -17,18 +19,23 @@ public interface Message {
 	
 	void setTitle(String title);
 	void setData(String data);
+	void setBufferedReader(BufferedReader br);
 	
 	int getPort();
 	int getContentLength();
+	int getRFCNumber();
 	String getContentType();
 	String getHost();
 	String getOS();
 	String getTitle();
 	String getData();
 	
+	BufferedReader getBufferedReader();
+	
 	Utility.MSG_TYPE getType();
 	
-	void send(Socket socket);
+	void send(Socket socket) throws IOException;
+	void readMessage() throws IOException;
 	
 
 }

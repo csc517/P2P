@@ -1,10 +1,10 @@
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 
 
@@ -17,34 +17,39 @@ public class ResponseRFCMessage implements Message {
 	StringBuffer responseContent;
 	Calendar lastModified;
 	String data;
-	RESPONSE_TYPE responseType;
+	
+	BufferedReader br = null;
+	InputStream inputStream = null;
+	
+	Utility.MSG_TYPE msg_type;	//message type - message is a response
+	Utility.RESPONSE_TYPE responseType;	//type of response
+	Utility.MSG_TYPE request_type;	//request type for which this a response
 
 	
-	public ResponseRFCMessage(RESPONSE_TYPE response_type) {
+	public ResponseRFCMessage(Utility.RESPONSE_TYPE response_type) {
+		this.msg_type = Utility.MSG_TYPE.RESPONSE;
 		this.responseType = response_type;
 	}
+		
+	public ResponseRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) {
+		this.msg_type = msg_type;
+		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+		this.inputStream = inputStream;
+		this.br = br;
+	}
 	
-	
-	public enum RESPONSE_TYPE {
-		OK, BAD_REQ, NOT_FOUND, VERSION_UNSUPPORTED;
+	public void readMessage()  throws IOException {
+		System.out.println("reading line from response...");
+		String str = br.readLine();
+		System.out.println(str);
+//		Utility.read_fields(this, inputStream);
+		int num_fields = Integer.valueOf(br.readLine());
+		System.out.println("Number of fields: "+num_fields);
 		
-		private static HashMap<RESPONSE_TYPE, Status> map;
-		static {
-			map = new HashMap<RESPONSE_TYPE, Status>();
-			RESPONSE_TYPE type = null;
-			map.put(type.OK, new Status(200, "OK"));
-			map.put(type.BAD_REQ, new Status(400, "Bad Request"));
-			map.put(type.NOT_FOUND, new Status(404, "Not Found"));
-			map.put(type.VERSION_UNSUPPORTED, new Status(505, "P2P-CI Version Not Supported"));
+		for(int i=0;i<num_fields;++i) {
+			String field = br.readLine();
+			System.out.println(field);
 		}
-		
-		public static String getResponseString(RESPONSE_TYPE responseType) {
-			Status status = map.get(responseType);
-			return(status.getStatusCode() + " " + status.getMessage());
-			
-			
-		}
-		
 	}
 	
 	public StringBuffer getResponseContent() {
@@ -88,7 +93,7 @@ public class ResponseRFCMessage implements Message {
 		this.data = data;
 	}
 	
-	public void setResponse(RESPONSE_TYPE response) {
+	public void setResponse(Utility.RESPONSE_TYPE response) {
 		this.responseType = response;
 	}
 	
@@ -107,37 +112,37 @@ public class ResponseRFCMessage implements Message {
 		return null;
 	}
 	
-	public void sendServerResponse(Socket socket) {
+	public void sendServerResponse(Socket socket) throws IOException {
 		StringBuffer buf = new StringBuffer();
 		
-		buf.append(VERSION +
-				   DELIMITER +
-				   RESPONSE_TYPE.getResponseString(this.responseType) +
-				   EOL);
+		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 		
-		if(this.responseType == RESPONSE_TYPE.OK)
-		{
-			buf.append(this.getResponseContent());
-		}
-		try {
-			PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
-			pw.print(buf);
-			pw.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Utility.writeInteger(socket, this.msg_type.ordinal());
 		
+		buf.append(	VERSION +
+					DELIMITER +
+					Utility.RESPONSE_TYPE.getResponseString(this.responseType) +
+					EOL);
+		
+		buf.append(this.getResponseContent());		
+
+		System.out.print("response buf: "+ buf);
+		
+		pw.print(buf);
+		pw.flush();		
 	}
 	
 	public void sendPeerResponse(Socket socket) {
 		StringBuffer buf = new StringBuffer();
 		
-		buf.append(VERSION +
-				   DELIMITER +
-				   RESPONSE_TYPE.getResponseString(this.responseType) +
-				   EOL);
+		buf.append(this.msg_type +
+					DELIMITER +
+					VERSION +
+					DELIMITER +
+					Utility.RESPONSE_TYPE.getResponseString(this.responseType) +
+					EOL);
 		
-		if(this.responseType == RESPONSE_TYPE.OK)
+		if(this.responseType == Utility.RESPONSE_TYPE.OK)
 		{
 			buf.append(5);
 			Utility.add_field(buf, "Date", this.getDate());
@@ -201,13 +206,36 @@ public class ResponseRFCMessage implements Message {
 	@Override
 	public Utility.MSG_TYPE getType() {
 		// TODO Auto-generated method stub
-		return null;
+		return this.msg_type;
 	}
 
 	@Override
 	public void send(Socket socket) {
 		// TODO Auto-generated method stub
 		
+	}
+
+
+	@Override
+	public void setRFCNumber(int rfcNumber) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public int getRFCNumber() {
+		return 0;
+	}
+
+	@Override
+	public void setBufferedReader(BufferedReader br) {
+		this.br = br;
+	}
+
+	@Override
+	public BufferedReader getBufferedReader() {
+		return br;
 	}
 
 }

@@ -1,3 +1,4 @@
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -124,6 +125,29 @@ public class ListRFCMessage implements Message {
 
 	@Override
 	public void setRFCNumber(int rfcNumber) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int getRFCNumber() {
+		return 0;
+	}
+
+	@Override
+	public void setBufferedReader(BufferedReader br) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BufferedReader getBufferedReader() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void readMessage() throws IOException {
 		// TODO Auto-generated method stub
 		
 	}

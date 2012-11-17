@@ -1,11 +1,16 @@
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -217,24 +222,59 @@ public class Utility {
 
 	}
 
-	public static void send_file(Socket socket, String filename) {
+	public static void send_file (Socket socket, int rfcNumber) throws FileNotFoundException, IOException {
+		
 		//append default path to file name
-		File myFile = new File(filename);
-		byte[] mybytearray = new byte[(int) myFile.length()];
-		try {
-			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(myFile));
-			bis.read(mybytearray, 0, mybytearray.length);
-			OutputStream os = socket.getOutputStream();
-			os.write(mybytearray, 0, mybytearray.length);
-			os.flush();
+		File rfcFile = new File(new Integer(rfcNumber).toString());
+		
+		if(!rfcFile.exists()) {
+			return;
 		}
-		catch(IOException e) {
-			System.out.println("error");
-			System.exit(-1);
-		}
+		  
+		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);                    
+        int len = (int)rfcFile.length();    
+        
+        out.println(Integer.toString(rfcNumber));
+        out.println(Integer.toString(len));
+        out.flush();
+  
+        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(rfcFile));  
+        BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
+        
+        byte[] byteArray = new byte[1000];  
+        int i=0;
+        System.out.println("From file to socket...");
+        while ((i = bis.read(byteArray)) != len){  
+            bos.write(byteArray, 0, i);  
+        }
+        bos.flush();
+        System.out.println("From file to socket...DONE");
+	}
 
-
-
+	public static String recv_file(Socket socket) throws IOException {
+		
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));      
+        
+        int rfcNumber = Integer.valueOf(in.readLine());
+        int length = Integer.parseInt(in.readLine());
+        
+		File newRFCFile = new File(new Integer(rfcNumber).toString());
+		newRFCFile.createNewFile();
+        
+        BufferedInputStream bis = new BufferedInputStream(socket.getInputStream());  
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(newRFCFile));  
+        
+        int IN=0;   
+        byte[] receivedData = new byte[1000];
+        System.out.println("From socket to file...");
+        while ((IN = bis.read(receivedData)) != length){  
+            bos.write(receivedData,0,IN);  
+        }
+		bos.flush();
+		System.out.println("From socket to file...DONE");
+		
+		BufferedReader lineReader = new BufferedReader(new FileReader(newRFCFile));
+		return lineReader.readLine().split(" ")[2];
 	}
 
 	public static ArrayList<String> textFiles(String directory) {

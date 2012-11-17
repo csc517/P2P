@@ -117,7 +117,6 @@ public class Server extends Thread {
 				}
 
 			} catch (IOException e) {
-//				e.printStackTrace();
 				Iterator<RFCListEntry> iter = rfcList.iterator();
 				synchronized (Server.map) {
 					while(iter.hasNext()) {

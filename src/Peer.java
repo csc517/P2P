@@ -32,7 +32,6 @@ public class Peer extends Thread {
 				case GET:
 					//send peer response
 					//send the file to requesting host
-//					Utility.send_file(incomingSocket, msg.getTitle());
 					ResponseRFCMessage response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
 					
 					StringBuffer buf = new StringBuffer();
@@ -41,6 +40,9 @@ public class Peer extends Thread {
 					
 					response.setResponseContent(buf);
 					response.sendServerResponse(incomingSocket);
+					
+					Utility.send_file(incomingSocket, msg.getRFCNumber());
+					
 					incomingSocket.close();
 					System.out.println("Sent response for ADD...");
 					break;
@@ -64,18 +66,16 @@ public class Peer extends Thread {
 
 	}
 
-	public static void acceptResponseFromServer(Socket incomingSocket) {
+	@SuppressWarnings("finally")
+	public static Message acceptResponse(Socket incomingSocket) {
+		Message msg = null;
 		try {
 			System.out.println("acceptResponseFromServer(): Parsing msg..");
-			Message msg = Utility.parseMessage(incomingSocket);
+			msg = Utility.parseMessage(incomingSocket);
 			msg.readMessage();
 
 			switch(msg.getType()) {
 			case GET:
-				//send peer response
-				//send the file to requesting host
-				Utility.send_file(incomingSocket, msg.getTitle());
-				break;
 			case ADD:
 			case LOOKUP:
 			case LIST:
@@ -86,6 +86,8 @@ public class Peer extends Thread {
 			System.out.println(msg);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			return msg;
 		}
 	}
 	
@@ -169,7 +171,7 @@ public class Peer extends Thread {
 					msg.setRFCNumber(rfcNumber);
 					msg.send(connectSocket);
 					
-					acceptResponseFromServer(connectSocket);
+					acceptResponse(connectSocket);
 
 				} else if(consoleLinesArr[0].equals("GET")) {
 
@@ -185,7 +187,9 @@ public class Peer extends Thread {
 					msg.setRFCNumber(rfcNumber);
 					msg.send(clientConnectSocket);
 					
-					acceptResponseFromServer(clientConnectSocket);
+					acceptResponse(clientConnectSocket);
+					
+					String title = Utility.recv_file(clientConnectSocket);
 					
 					clientConnectSocket.close();
 					
@@ -193,10 +197,10 @@ public class Peer extends Thread {
 					msg.setPort(serverSocket.getLocalPort());
 					msg.setHost(serverSocket.getInetAddress().getHostName());
 					msg.setRFCNumber(rfcNumber);
-					msg.setTitle("");
+					msg.setTitle(title);
 					msg.send(connectSocket);
 
-					acceptResponseFromServer(connectSocket);
+					acceptResponse(connectSocket);
 
 				} else if (consoleLinesArr[0].equals("ADD")) {
 					//[0] [1]    [2]        [3]
@@ -211,7 +215,7 @@ public class Peer extends Thread {
 					msg.setTitle(rfcTitle);
 					msg.send(connectSocket);
 
-					acceptResponseFromServer(connectSocket);
+					acceptResponse(connectSocket);
 
 				} else if(consoleLinesArr[0].equalsIgnoreCase("LIST")) {
 

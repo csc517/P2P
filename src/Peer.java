@@ -188,6 +188,15 @@ public class Peer extends Thread {
 					acceptResponseFromServer(clientConnectSocket);
 					
 					clientConnectSocket.close();
+					
+					msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
+					msg.setPort(serverSocket.getLocalPort());
+					msg.setHost(serverSocket.getInetAddress().getHostName());
+					msg.setRFCNumber(rfcNumber);
+					msg.setTitle("");
+					msg.send(connectSocket);
+
+					acceptResponseFromServer(connectSocket);
 
 				} else if (consoleLinesArr[0].equals("ADD")) {
 					//[0] [1]    [2]        [3]

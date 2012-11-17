@@ -15,9 +15,11 @@ public class Server extends Thread {
 			new HashMap<Integer, ArrayList<PeerInfo>>();
 	
 	Socket clientSocket;
+	ArrayList<RFCListEntry> rfcList = null;
 
 	public Server(Socket clientSocket) {
 		this.clientSocket = clientSocket;
+		this.rfcList = new ArrayList<RFCListEntry>();
 	}
 	
 	public void run() {
@@ -28,13 +30,12 @@ public class Server extends Thread {
 
 				switch (msg.getType()) {
 				case ADD:
+					PeerInfo peerinfo = new PeerInfo(msg.getPort(), msg.getHost(), msg.getTitle());
+					RFCListEntry rfcListEntry = new RFCListEntry(msg.getRFCNumber(), peerinfo);
+					rfcList.add(rfcListEntry);
+					
 					synchronized (Server.map) {
-						ArrayList<PeerInfo> list = Server.map.get(msg
-								.getRFCNumber());
-
-						PeerInfo peerinfo = new PeerInfo(msg.getPort(),
-								msg.getHost(), msg.getTitle());
-						System.out.println(peerinfo);
+						ArrayList<PeerInfo> list = Server.map.get(msg.getRFCNumber());
 
 						if (null == list) {
 							ArrayList<PeerInfo> arr = new ArrayList<PeerInfo>();
@@ -116,7 +117,24 @@ public class Server extends Thread {
 				}
 
 			} catch (IOException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				Iterator<RFCListEntry> iter = rfcList.iterator();
+				synchronized (Server.map) {
+					while(iter.hasNext()) {
+						RFCListEntry rfcListEntry = iter.next();
+						System.out.println("Removing key: "+ rfcListEntry.getRfcNumber());
+						ArrayList<PeerInfo> arrList = Server.map.get(rfcListEntry.getRfcNumber());
+						if(null != arrList) {
+							//remove from array list
+							arrList.remove(rfcListEntry.getPeerInfo());
+							
+							//if size is zero, remove from map
+							if(arrList.size() == 0) {
+								Server.map.remove(rfcListEntry.getRfcNumber());
+							}
+						}
+					}
+				}
 				break;
 			}
 		}		
@@ -147,4 +165,31 @@ public class Server extends Thread {
 			new Server(clientSocket).start();			
 		}
 	}
+}
+
+class RFCListEntry {
+	private int rfcNumber;
+	private PeerInfo peerInfo;
+	
+	public RFCListEntry(int rfcNumber, PeerInfo peerInfo) {
+		this.rfcNumber = rfcNumber;
+		this.peerInfo = peerInfo;
+	}
+
+	public int getRfcNumber() {
+		return rfcNumber;
+	}
+
+	public void setRfcNumber(int rfcNumber) {
+		this.rfcNumber = rfcNumber;
+	}
+
+	public PeerInfo getPeerInfo() {
+		return peerInfo;
+	}
+
+	public void setPeerInfo(PeerInfo peerInfo) {
+		this.peerInfo = peerInfo;
+	}
+	
 }

@@ -192,8 +192,11 @@ public class Peer extends Thread {
 
 			Console console = System.console();
 			while(true) {
-				System.out.println("Waiting for input...");
+				System.out.println("Type 'help' for usage. Waiting for input...");
 				String consoleLine = console.readLine();
+				if(null == consoleLine) {
+					break;
+				}
 				String [] consoleLinesArr = consoleLine.split(" ");
 
 				if(consoleLinesArr[0].equalsIgnoreCase("LOOKUP")) {
@@ -268,6 +271,11 @@ public class Peer extends Thread {
 					//ADD RFC <RFC_NUMBER> <title>
 					int rfcNumber = Integer.parseInt(consoleLinesArr[2]);
 					String rfcTitle = consoleLinesArr[3];
+					
+					if( !(new File(Utility.getRFCFilename(rfcNumber))).isFile() ) {
+						System.out.println("RFC File not present: " + Utility.getRFCFilename(rfcNumber));
+						continue;
+					}
 
 					Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
 					msg.setPort(serverSocket.getLocalPort());
@@ -286,12 +294,13 @@ public class Peer extends Thread {
 					}
 
 					//LIST RFC
-					Message msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
-					msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
-					msg.setPort(serverSocket.getLocalPort());
-					msg.setHost(serverSocket.getInetAddress().getHostName());
+					/*Message msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
 					msg.send(connectSocket);
+					
+					acceptResponse(connectSocket);*/
 
+				} else if(consoleLinesArr[0].equalsIgnoreCase("HELP")) {
+					printCommands();
 				} else {
 					System.out.println("Invalid command: " + consoleLine);
 				}
@@ -300,5 +309,13 @@ public class Peer extends Thread {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void printCommands() {
+		System.out.println("COMMANDS:");
+		System.out.println("LOOKUP RFC <RFC_NUMBER>");
+		System.out.println("ADD RFC <RFC_NUMBER> <title>");
+		System.out.println("GET RFC <RFC_NUMBER> <host> <port>");
+		System.out.println("LIST RFC");
 	}
 }

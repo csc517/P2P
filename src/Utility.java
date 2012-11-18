@@ -238,7 +238,7 @@ public class Utility {
 	public static void send_file (Socket socket, int rfcNumber) throws FileNotFoundException, IOException {
 		
 		//append default path to file name
-		File rfcFile = new File(Peer.workingDir + File.separator + new Integer(rfcNumber).toString());
+		File rfcFile = new File(getRFCFilename(rfcNumber));
 		
 		if(!rfcFile.exists()) {
 			return;
@@ -291,7 +291,7 @@ public class Utility {
         int fileTransferPort = Integer.parseInt(in.readLine());
         String fileTransferHost = in.readLine();
         
-		File newRFCFile = new File(Peer.workingDir + File.separator + new Integer(rfcNumber).toString());
+		File newRFCFile = new File(getRFCFilename(rfcNumber));
 		newRFCFile.createNewFile();
         
         Socket fileTransferSocket = new Socket(fileTransferHost, fileTransferPort); 
@@ -325,17 +325,20 @@ public class Utility {
 		return lineReader.readLine().split(" ")[2];
 	}
 
-	public static ArrayList<String> textFiles(String directory) {
+	public static ArrayList<String> textFiles(File dir) {
 		  ArrayList<String> textFiles = new ArrayList<String>();		  
-		  if(null != directory) {
-			  File dir = new File(directory);
+		  if(null != dir) {
 			  for (File file : dir.listFiles()) {
-				  if (file.getName().endsWith((".txt"))) {
-					  textFiles.add(file.getName());
+				  if (file.getName().endsWith((".rfc"))) {
+					  textFiles.add(file.getAbsolutePath());
 				  }
 			  }
 		  }
 		  return textFiles;
+	}
+
+	public static String getRFCFilename(int rfcNumber) {
+		return Peer.workingDir + File.separator + new Integer(rfcNumber).toString() + ".rfc";
 	}
 	
 }

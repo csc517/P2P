@@ -60,16 +60,18 @@ public class Server extends Thread {
 					break;
 				case LOOKUP:
 					StringBuffer lookupResBuf = new StringBuffer();
-					lookupResBuf.append(1 + Message.EOL);
 					
 					ResponseRFCMessage lookupResponse = null;
 					
 					ArrayList<PeerInfo> list = Server.map.get(msg.getRFCNumber());
-					
+					int len = 0;
+					StringBuffer resContent = null;
 					if (null != list) {
+						resContent = new StringBuffer();
 						Iterator<PeerInfo> itr = list.iterator();
 						while (itr.hasNext()) {
-							lookupResBuf.append("RFC" + Message.DELIMITER
+							++len;
+							resContent.append("RFC" + Message.DELIMITER
 									+ msg.getRFCNumber() + Message.DELIMITER
 									+ itr.next().getRFCInfoString());
 						}
@@ -81,7 +83,11 @@ public class Server extends Thread {
 						lookupResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
 					}
 					
-					lookupResponse.setResponseContent(lookupResBuf);
+					lookupResBuf.append(len + Message.EOL);
+					lookupResBuf.append(resContent);
+					if(len != 0) {
+						lookupResponse.setResponseContent(lookupResBuf);
+					}
 					lookupResponse.sendServerResponse(this.clientSocket);
 					
 					System.out.println("Sent response for LOOKUP...");

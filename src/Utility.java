@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -225,53 +226,88 @@ public class Utility {
 	public static void send_file (Socket socket, int rfcNumber) throws FileNotFoundException, IOException {
 		
 		//append default path to file name
-		File rfcFile = new File(new Integer(rfcNumber).toString());
+		File rfcFile = new File(Peer.workingDir + File.separator + new Integer(rfcNumber).toString());
 		
 		if(!rfcFile.exists()) {
 			return;
 		}
 		  
 		PrintWriter out = new PrintWriter(socket.getOutputStream(), true);                    
-        int len = (int)rfcFile.length();    
+        int fileLength = (int)rfcFile.length();
         
         out.println(Integer.toString(rfcNumber));
-        out.println(Integer.toString(len));
+        out.println(Integer.toString(fileLength));
+        ServerSocket fileServerSocket = Peer.getServerSocket();
+        out.println(fileServerSocket.getLocalPort());
+        out.println(fileServerSocket.getInetAddress().getHostName());
         out.flush();
-  
-        BufferedInputStream bis = new BufferedInputStream(new FileInputStream(rfcFile));  
-        BufferedOutputStream bos = new BufferedOutputStream(socket.getOutputStream());
         
-        byte[] byteArray = new byte[1000];  
-        int i=0;
+        Socket fileSocket = fileServerSocket.accept();
+   
+        BufferedOutputStream bos = new BufferedOutputStream(fileSocket.getOutputStream());
+ 
+        InputStream inputStream = new FileInputStream(rfcFile);
+        
         System.out.println("From file to socket...");
-        while ((i = bis.read(byteArray)) != len){  
-            bos.write(byteArray, 0, i);  
-        }
+        
+        byte[] buf = new byte[1000];
+        int len = 0;
+		int total_len = 0;
+
+		while(total_len != fileLength) {
+			len = readBytes(inputStream, buf, 1000);
+			if(len <= 0) {	//end of stream reached
+				break;
+			}
+			total_len += len;
+			bos.write(buf, 0, len);
+		}
+
         bos.flush();
+        
+        fileSocket.close();
+        fileServerSocket.close();
+        
         System.out.println("From file to socket...DONE");
 	}
 
-	public static String recv_file(Socket socket) throws IOException {
-		
-		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));      
+	public static String recv_file(Socket socket, BufferedReader in) throws IOException {      
         
         int rfcNumber = Integer.valueOf(in.readLine());
-        int length = Integer.parseInt(in.readLine());
+        int fileLength = Integer.parseInt(in.readLine());
         
-		File newRFCFile = new File(new Integer(rfcNumber).toString());
+        int fileTransferPort = Integer.parseInt(in.readLine());
+        String fileTransferHost = in.readLine();
+        
+		File newRFCFile = new File(Peer.workingDir + File.separator + new Integer(rfcNumber).toString());
 		newRFCFile.createNewFile();
         
-        BufferedInputStream bis = new BufferedInputStream(socket.getInputStream());  
+        Socket fileTransferSocket = new Socket(fileTransferHost, fileTransferPort); 
+  
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(newRFCFile));  
         
-        int IN=0;   
-        byte[] receivedData = new byte[1000];
+        InputStream inputStream = fileTransferSocket.getInputStream();
+
         System.out.println("From socket to file...");
-        while ((IN = bis.read(receivedData)) != length){  
-            bos.write(receivedData,0,IN);  
-        }
-		bos.flush();
+        
+        byte[] buf = new byte[1000];
+        int len = 0;
+		int total_len = 0;
+
+		while(total_len != fileLength) {
+			len = readBytes(inputStream, buf, 1000);
+			if(len <= 0) {	//end of stream reached
+				break;
+			}
+			total_len += len;
+			bos.write(buf, 0, len);
+		}
+
+        bos.flush();
+        
 		System.out.println("From socket to file...DONE");
+		
+		fileTransferSocket.close();
 		
 		BufferedReader lineReader = new BufferedReader(new FileReader(newRFCFile));
 		return lineReader.readLine().split(" ")[2];

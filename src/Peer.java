@@ -14,6 +14,7 @@ public class Peer extends Thread {
 	ServerSocket serverSocket = null;
 
 	static Object waitObject = new Object();
+	static String workingDir;
 
 	public Peer(ServerSocket serverSocket) {
 		this.serverSocket = serverSocket;
@@ -40,11 +41,13 @@ public class Peer extends Thread {
 					
 					response.setResponseContent(buf);
 					response.sendServerResponse(incomingSocket);
+					System.out.println("Sent response for GET...");
 					
+					System.out.println("Sending file...");
 					Utility.send_file(incomingSocket, msg.getRFCNumber());
 					
 					incomingSocket.close();
-					System.out.println("Sent response for ADD...");
+					System.out.println("Sending file...DONE");
 					break;
 				case ADD:
 				case LOOKUP:
@@ -110,6 +113,26 @@ public class Peer extends Thread {
 
 	public static void main(String[] args) {
 		try {
+			Peer.workingDir = System.getProperty("user.dir");
+			
+			if(args.length >= 1) {
+				if(args[0].charAt(1) == ':') {
+					Peer.workingDir = args[0];
+				} else {
+					Peer.workingDir = Peer.workingDir + File.separator + args[0];
+				}
+			}
+			
+			File dirFile = new File(Peer.workingDir);
+			if(!dirFile.exists()) {
+				dirFile.mkdirs();
+			} else {
+				if(!dirFile.isDirectory()) {
+					System.err.println(dirFile.getAbsolutePath() + " is not a directory");
+					System.exit(-1);
+				}
+			}
+			
 			int serverPort = Utility.serverPort;
 			String serverHost = "localhost";
 			Socket connectSocket = new Socket(serverHost, serverPort);
@@ -187,9 +210,9 @@ public class Peer extends Thread {
 					msg.setRFCNumber(rfcNumber);
 					msg.send(clientConnectSocket);
 					
-					acceptResponse(clientConnectSocket);
+					Message resMsg = acceptResponse(clientConnectSocket);
 					
-					String title = Utility.recv_file(clientConnectSocket);
+					String title = Utility.recv_file(clientConnectSocket, resMsg.getBufferedReader());
 					
 					clientConnectSocket.close();
 					

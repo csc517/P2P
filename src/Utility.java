@@ -25,20 +25,32 @@ public class Utility {
 	public enum RESPONSE_TYPE {
 		OK, BAD_REQ, NOT_FOUND, VERSION_UNSUPPORTED;
 		
-		private static HashMap<RESPONSE_TYPE, Status> map;
+		private static HashMap<RESPONSE_TYPE, Status> statusMap;
 		static {
-			map = new HashMap<RESPONSE_TYPE, Status>();
-			map.put(RESPONSE_TYPE.OK, new Status(200, "OK"));
-			map.put(RESPONSE_TYPE.BAD_REQ, new Status(400, "Bad Request"));
-			map.put(RESPONSE_TYPE.NOT_FOUND, new Status(404, "Not Found"));
-			map.put(RESPONSE_TYPE.VERSION_UNSUPPORTED, new Status(505, "P2P-CI Version Not Supported"));
+			statusMap = new HashMap<RESPONSE_TYPE, Status>();
+			statusMap.put(RESPONSE_TYPE.OK, new Status(200, "OK"));
+			statusMap.put(RESPONSE_TYPE.BAD_REQ, new Status(400, "Bad Request"));
+			statusMap.put(RESPONSE_TYPE.NOT_FOUND, new Status(404, "Not Found"));
+			statusMap.put(RESPONSE_TYPE.VERSION_UNSUPPORTED, new Status(505, "P2P-CI Version Not Supported"));
 		}
 		
 		public static String getResponseString(RESPONSE_TYPE responseType) {
-			Status status = map.get(responseType);
-			return(status.getStatusCode() + " " + status.getMessage());
-			
-			
+			Status status = statusMap.get(responseType);
+			return(status.getStatusCode() + " " + status.getMessage());			
+		}
+		
+		private static HashMap<Integer, RESPONSE_TYPE> map;
+		static {
+			map = new HashMap<Integer, RESPONSE_TYPE>();
+			System.out.println("creating RESPONSE_TYPE map...");
+			for (RESPONSE_TYPE type: RESPONSE_TYPE.values()) {
+				System.out.println("Adding " + type.ordinal() + ":"+type);
+				map.put(type.ordinal(), type);
+			}
+		}
+
+		public static RESPONSE_TYPE getType(int ordinal) {
+			return map.get(ordinal);
 		}
 		
 	}

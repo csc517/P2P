@@ -33,7 +33,15 @@ public class Peer extends Thread {
 				case GET:
 					//send peer response
 					//send the file to requesting host
-					ResponseRFCMessage response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
+					File rfcFile = new File(Peer.workingDir + File.separator + new Integer(msg.getRFCNumber()).toString());
+					ResponseRFCMessage response = null;
+					
+					if(!rfcFile.exists()) {
+						response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
+					} else {
+					
+						response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
+					}
 					
 					StringBuffer buf = new StringBuffer();
 					
@@ -42,12 +50,14 @@ public class Peer extends Thread {
 					response.setResponseContent(buf);
 					response.sendServerResponse(incomingSocket);
 					System.out.println("Sent response for GET...");
-					
-					System.out.println("Sending file...");
-					Utility.send_file(incomingSocket, msg.getRFCNumber());
+
+					if(rfcFile.exists()) {
+						System.out.println("Sending file...");
+						Utility.send_file(incomingSocket, msg.getRFCNumber());
+						System.out.println("Sending file...DONE");
+					}
 					
 					incomingSocket.close();
-					System.out.println("Sending file...DONE");
 					break;
 				case ADD:
 				case LOOKUP:
@@ -203,7 +213,13 @@ public class Peer extends Thread {
 					String clientHost = consoleLinesArr[3];
 					int clientPort = Integer.parseInt(consoleLinesArr[4]);
 					
-					Socket clientConnectSocket = new Socket(clientHost, clientPort);
+					Socket clientConnectSocket = null;
+					try {
+						clientConnectSocket = new Socket(clientHost, clientPort);
+					} catch (Exception e) {
+						System.err.println("Could not connect to "+clientHost + ":" + clientPort);
+						continue;
+					}
 
 					Message msg = Utility.createMessage(Utility.MSG_TYPE.GET);
 					msg.setHost("");
@@ -212,18 +228,19 @@ public class Peer extends Thread {
 					
 					Message resMsg = acceptResponse(clientConnectSocket);
 					
-					String title = Utility.recv_file(clientConnectSocket, resMsg.getBufferedReader());
+					if( ((ResponseRFCMessage)resMsg).getResponseType() == Utility.RESPONSE_TYPE.OK) {
+						String title = Utility.recv_file(clientConnectSocket, resMsg.getBufferedReader());
+						msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
+						msg.setPort(serverSocket.getLocalPort());
+						msg.setHost(serverSocket.getInetAddress().getHostName());
+						msg.setRFCNumber(rfcNumber);
+						msg.setTitle(title);
+						msg.send(connectSocket);
+
+						acceptResponse(connectSocket);
+					}
 					
 					clientConnectSocket.close();
-					
-					msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
-					msg.setPort(serverSocket.getLocalPort());
-					msg.setHost(serverSocket.getInetAddress().getHostName());
-					msg.setRFCNumber(rfcNumber);
-					msg.setTitle(title);
-					msg.send(connectSocket);
-
-					acceptResponse(connectSocket);
 
 				} else if (consoleLinesArr[0].equals("ADD")) {
 					//[0] [1]    [2]        [3]

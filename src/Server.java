@@ -84,10 +84,10 @@ public class Server extends Thread {
 					}
 					
 					lookupResBuf.append(len + Message.EOL);
-					lookupResBuf.append(resContent);
 					if(len != 0) {
-						lookupResponse.setResponseContent(lookupResBuf);
+						lookupResBuf.append(resContent);
 					}
+					lookupResponse.setResponseContent(lookupResBuf);
 					lookupResponse.sendServerResponse(this.clientSocket);
 					
 					System.out.println("Sent response for LOOKUP...");

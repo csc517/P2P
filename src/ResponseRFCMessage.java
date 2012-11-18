@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -5,9 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Calendar;
-import java.util.HashMap;
-
-
 
 public class ResponseRFCMessage implements Message {
 	
@@ -41,6 +39,7 @@ public class ResponseRFCMessage implements Message {
 	public void readMessage()  throws IOException {
 		System.out.println("reading line from response...");
 		String str = br.readLine();
+		this.responseType = Utility.RESPONSE_TYPE.getType(Integer.valueOf(str.split(" ")[1]));
 		System.out.println(str);
 //		Utility.read_fields(this, inputStream);
 		int num_fields = Integer.valueOf(br.readLine());
@@ -120,6 +119,8 @@ public class ResponseRFCMessage implements Message {
 		Utility.writeInteger(socket, this.msg_type.ordinal());
 		
 		buf.append(	VERSION +
+					DELIMITER +
+					this.responseType.ordinal() +
 					DELIMITER +
 					Utility.RESPONSE_TYPE.getResponseString(this.responseType) +
 					EOL);
@@ -236,6 +237,10 @@ public class ResponseRFCMessage implements Message {
 	@Override
 	public BufferedReader getBufferedReader() {
 		return br;
+	}
+
+	public Utility.RESPONSE_TYPE getResponseType() {
+		return this.responseType;
 	}
 
 }

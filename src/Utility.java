@@ -1,4 +1,4 @@
-import java.io.BufferedInputStream;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -8,8 +8,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,8 +17,8 @@ import java.util.HashMap;
 
 
 
-
 public class Utility {
+	
 	static int serverPort = 12345;
 	
 	public enum RESPONSE_TYPE {
@@ -180,13 +178,13 @@ public class Utility {
 	
 	public static void writeInteger(Socket socket, int writeInt) throws IOException {
 		System.out.println("Writing integer: "+writeInt);
-		ByteBuffer integerBuffer = new ByteBuffer(Message.INT_LEN);
-		integerBuffer.append(writeInt);
-		for(int i=integerBuffer.size()-1;i>=0;--i) {
-			System.out.print(integerBuffer.toArray()[i] + " ");
+		ByteBuffer integerBuffer = ByteBuffer.allocate(Message.INT_LEN);
+		integerBuffer.putInt(writeInt);
+		for(int i=integerBuffer.array().length-1;i>=0;--i) {
+			System.out.print(integerBuffer.array()[i] + " ");
 		}
 		System.out.println();
-		socket.getOutputStream().write(integerBuffer.toArray());
+		socket.getOutputStream().write(integerBuffer.array());
 		socket.getOutputStream().flush();
 	}
 

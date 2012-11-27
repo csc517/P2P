@@ -125,13 +125,16 @@ public class Peer extends Thread {
 	public static void main(String[] args) {
 		try {
 			Peer.workingDir = System.getProperty("user.dir");
+			
+			if(args.length != 3) {
+				System.err.println("Usage: Java Peer <server_hostname> <server_port> <RFC Folder>");
+				System.exit(-1);
+			}
 
-			if(args.length >= 1) {
-				if(args[0].charAt(1) == ':') {
-					Peer.workingDir = args[0];
-				} else {
-					Peer.workingDir = Peer.workingDir + File.separator + args[0];
-				}
+			if(args[2].charAt(1) == ':') {
+				Peer.workingDir = args[2];
+			} else {
+				Peer.workingDir = Peer.workingDir + File.separator + args[2];
 			}
 
 			File dirFile = new File(Peer.workingDir);
@@ -147,7 +150,9 @@ public class Peer extends Thread {
 			System.out.println("RFC Files directory is "+ dirFile.getAbsolutePath());
 
 			int serverPort = Utility.serverPort;
+			serverPort = Integer.valueOf(args[1]);
 			String serverHost = "localhost";
+			serverHost = args[0];
 			Socket connectSocket = new Socket(serverHost, serverPort);
 			ServerSocket serverSocket = getServerSocket();
 			if(serverSocket == null) {

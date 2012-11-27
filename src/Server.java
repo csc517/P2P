@@ -21,6 +21,18 @@ public class Server extends Thread {
 		this.clientSocket = clientSocket;
 		this.rfcList = new ArrayList<RFCListEntry>();
 	}
+	
+	private void addList(ArrayList<PeerInfo> list, PeerInfo peerinfo) {
+		Iterator<PeerInfo> iter = list.iterator();
+		while(iter.hasNext()) {
+			PeerInfo peer = iter.next();
+			if(peer.equals(peerinfo)) {
+				return;
+			}
+		}
+		list.add(peerinfo);
+		
+	}
 
 	public void run() {
 		while (true) {
@@ -42,7 +54,8 @@ public class Server extends Thread {
 							arr.add(peerinfo);
 							Server.map.put(msg.getRFCNumber(), arr);
 						} else {
-							list.add(peerinfo);
+							addList(list, peerinfo);
+//							list.add(peerinfo);
 						}
 					}
 
@@ -128,6 +141,7 @@ public class Server extends Thread {
 					}
 					listResponse.setResponseContent(listResBuf);
 					listResponse.sendServerResponse(this.clientSocket);
+					break;
 
 				default:
 					return;
@@ -159,6 +173,11 @@ public class Server extends Thread {
 
 	public static void main(String[] args) {
 		int serverPort = Utility.serverPort;
+		if(args.length != 1) {
+			System.err.println("Usage: Java Server <server port>");
+			System.exit(-1);
+		}
+		serverPort = Integer.valueOf(args[0]);
 
 		ServerSocket serverSocket = null;
 		Socket clientSocket = null;

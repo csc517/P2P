@@ -19,8 +19,8 @@ public class GetRFCMessage implements Message {
 		this.msg_type = msg_type;
 	}
 
-	public GetRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+	public GetRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream, BufferedReader br) throws IOException {
+		//BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 		this.br = br;
 		this.msg_type = Utility.MSG_TYPE.GET;
 		this.inputStream = inputStream;		
@@ -125,16 +125,17 @@ public class GetRFCMessage implements Message {
 		
 		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 		
-		Utility.writeInteger(socket, this.msg_type.ordinal());
-
-		buf.append( "RFC" +
+		//Utility.writeInteger(socket, this.msg_type.ordinal());
+		buf.append(this.msg_type.ordinal() + EOL +
+				"RFC" +
 				DELIMITER +
 				this.rfcNumber +
 				DELIMITER +
 				VERSION +
 				EOL);
 		
-		System.out.print("writing buffer:"+ buf.toString());
+		System.out.println("writing buffer:");
+		System.out.println(buf.toString());
 		
 		pw.print(buf);
 		pw.flush();

@@ -8,13 +8,13 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 
 
 public class Utility {
@@ -93,26 +93,28 @@ public class Utility {
 
 	public static Message parseMessage(Socket incomingSocket) throws IOException {
 		InputStream inputStream = incomingSocket.getInputStream();
+		BufferedReader br = new BufferedReader(new InputStreamReader(incomingSocket.getInputStream()));
 		
-		System.out.println("Trying to read msg type...");
-
-		int msg_type_int = readInteger(inputStream);
+		//System.out.println("Trying to read msg type...");
+		String s = br.readLine();
+		System.out.println("line read : " + s);
+		int msg_type_int = Integer.valueOf(s); //readInteger(inputStream);
 		
-		System.out.println("MSG_TYPE: "+ msg_type_int);
+		//System.out.println("MSG_TYPE: "+ msg_type_int);
 
 		MSG_TYPE msg_type = MSG_TYPE.getType(msg_type_int);
 
 		switch(msg_type) {
 		case GET:
-			return new GetRFCMessage(msg_type, inputStream);
+			return new GetRFCMessage(msg_type, inputStream, br);
 		case ADD:
-			return new AddRFCMessage(msg_type, inputStream);
+			return new AddRFCMessage(msg_type, inputStream, br);
 		case LOOKUP:
-			return new LookupRFCMessage(msg_type, inputStream);
+			return new LookupRFCMessage(msg_type, inputStream, br);
 		case LIST:
-			return new ListRFCMessage(msg_type, inputStream);
+			return new ListRFCMessage(msg_type, inputStream, br);
 		case  RESPONSE:
-			return new ResponseRFCMessage(msg_type, inputStream);
+			return new ResponseRFCMessage(msg_type, inputStream, br);
 		default: 
 			return null;
 
@@ -328,7 +330,7 @@ public class Utility {
 		  ArrayList<String> textFiles = new ArrayList<String>();		  
 		  if(null != dir) {
 			  for (File file : dir.listFiles()) {
-				  if (file.getName().endsWith((".rfc"))) {
+				  if (file.getName().endsWith((".txt"))) {
 					  textFiles.add(file.getAbsolutePath());
 				  }
 			  }
@@ -337,7 +339,7 @@ public class Utility {
 	}
 
 	public static String getRFCFilename(int rfcNumber) {
-		return Peer.workingDir + File.separator + new Integer(rfcNumber).toString() + ".rfc";
+		return Peer.workingDir + File.separator + new Integer(rfcNumber).toString() + ".txt";
 	}
 	
 }

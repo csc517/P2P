@@ -29,9 +29,9 @@ public class ResponseRFCMessage implements Message {
 		this.responseType = response_type;
 	}
 		
-	public ResponseRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) {
+	public ResponseRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream, BufferedReader br) {
 		this.msg_type = msg_type;
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+		//BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 		this.inputStream = inputStream;
 		this.br = br;
 	}
@@ -43,7 +43,7 @@ public class ResponseRFCMessage implements Message {
 		System.out.println(str);
 //		Utility.read_fields(this, inputStream);
 		int num_fields = Integer.valueOf(br.readLine());
-		System.out.println("Number of fields: "+num_fields);
+		//System.out.println("Number of fields: "+num_fields);
 		
 		for(int i=0;i<num_fields;++i) {
 			String field = br.readLine();
@@ -116,8 +116,8 @@ public class ResponseRFCMessage implements Message {
 		
 		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 		
-		Utility.writeInteger(socket, this.msg_type.ordinal());
-		
+		//Utility.writeInteger(socket, this.msg_type.ordinal());
+		buf.append(this.msg_type.ordinal() + EOL);
 		buf.append(	VERSION +
 					DELIMITER +
 					this.responseType.ordinal() +
@@ -127,7 +127,8 @@ public class ResponseRFCMessage implements Message {
 		
 		buf.append(this.getResponseContent());		
 
-		System.out.print("response buf: "+ buf);
+		System.out.println("response buf: ");
+		System.out.println(buf);
 		
 		pw.print(buf);
 		pw.flush();		

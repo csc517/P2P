@@ -10,10 +10,10 @@ import java.io.*;
 
 
 public class Server extends Thread {
-	
+
 	public static HashMap<Integer,ArrayList<PeerInfo>> map = 
 			new HashMap<Integer, ArrayList<PeerInfo>>();
-	
+
 	Socket clientSocket;
 	ArrayList<RFCListEntry> rfcList = null;
 
@@ -21,7 +21,7 @@ public class Server extends Thread {
 		this.clientSocket = clientSocket;
 		this.rfcList = new ArrayList<RFCListEntry>();
 	}
-	
+
 	public void run() {
 		while (true) {
 			try {
@@ -33,7 +33,7 @@ public class Server extends Thread {
 					PeerInfo peerinfo = new PeerInfo(msg.getPort(), msg.getHost(), msg.getTitle());
 					RFCListEntry rfcListEntry = new RFCListEntry(msg.getRFCNumber(), peerinfo);
 					rfcList.add(rfcListEntry);
-					
+
 					synchronized (Server.map) {
 						ArrayList<PeerInfo> list = Server.map.get(msg.getRFCNumber());
 
@@ -47,22 +47,21 @@ public class Server extends Thread {
 					}
 
 					ResponseRFCMessage response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
-					
+
 					StringBuffer buf = new StringBuffer();
-					
+
 					buf.append(0 + Message.EOL);
-					
+
 					response.setResponseContent(buf);
 					response.sendServerResponse(this.clientSocket);
-					
+
 					System.out.println("Sent response for ADD...");
-					
+
 					break;
 				case LOOKUP:
 					StringBuffer lookupResBuf = new StringBuffer();
-					
 					ResponseRFCMessage lookupResponse = null;
-					
+
 					ArrayList<PeerInfo> list = Server.map.get(msg.getRFCNumber());
 					int len = 0;
 					StringBuffer resContent = null;
@@ -75,28 +74,31 @@ public class Server extends Thread {
 									+ msg.getRFCNumber() + Message.DELIMITER
 									+ itr.next().getRFCInfoString());
 						}
-						
-//						lookupResBuf.append(Message.EOL);
+
+						//						lookupResBuf.append(Message.EOL);
 						lookupResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
-						
+
 					} else {	//send not found
 						lookupResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
 					}
-					
+
 					lookupResBuf.append(len + Message.EOL);
 					if(len != 0) {
 						lookupResBuf.append(resContent);
 					}
 					lookupResponse.setResponseContent(lookupResBuf);
 					lookupResponse.sendServerResponse(this.clientSocket);
-					
+
 					System.out.println("Sent response for LOOKUP...");
 					break;
+
 				case LIST:
+					len = 0;
 					Set<Entry<Integer, ArrayList<PeerInfo>>> entries = Server.map
 							.entrySet();
 					Iterator<Entry<Integer, ArrayList<PeerInfo>>> entriesIterator = entries
 							.iterator();
+					StringBuffer resContentList = new StringBuffer();
 					StringBuffer listResBuf = new StringBuffer();
 					while (entriesIterator.hasNext()) {
 
@@ -105,16 +107,25 @@ public class Server extends Thread {
 						Iterator<PeerInfo> arrayListIterator = entry.getValue()
 								.iterator();
 						while (arrayListIterator.hasNext()) {
-							listResBuf.append("RFC"
+							++len;
+							resContentList.append("RFC"
 									+ Message.DELIMITER
 									+ entry.getKey()
 									+ Message.DELIMITER
 									+ arrayListIterator.next()
-											.getRFCInfoString());
+									.getRFCInfoString());
 						}
 					}
-					ResponseRFCMessage listResponse = new ResponseRFCMessage(
-							Utility.RESPONSE_TYPE.OK);
+					ResponseRFCMessage listResponse = null;
+					listResBuf.append(len + Message.EOL);
+					if(len != 0) {
+						listResBuf.append(resContentList);
+						listResponse = new ResponseRFCMessage(
+								Utility.RESPONSE_TYPE.OK);
+					}
+					else {
+						listResponse = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
+					}
 					listResponse.setResponseContent(listResBuf);
 					listResponse.sendServerResponse(this.clientSocket);
 
@@ -132,7 +143,7 @@ public class Server extends Thread {
 						if(null != arrList) {
 							//remove from array list
 							arrList.remove(rfcListEntry.getPeerInfo());
-							
+
 							//if size is zero, remove from map
 							if(arrList.size() == 0) {
 								Server.map.remove(rfcListEntry.getRfcNumber());
@@ -145,13 +156,13 @@ public class Server extends Thread {
 		}		
 	}
 
-	
+
 	public static void main(String[] args) {
 		int serverPort = Utility.serverPort;
-		
+
 		ServerSocket serverSocket = null;
 		Socket clientSocket = null;
-		
+
 		try {
 			serverSocket = new ServerSocket(serverPort);
 		}
@@ -175,7 +186,7 @@ public class Server extends Thread {
 class RFCListEntry {
 	private int rfcNumber;
 	private PeerInfo peerInfo;
-	
+
 	public RFCListEntry(int rfcNumber, PeerInfo peerInfo) {
 		this.rfcNumber = rfcNumber;
 		this.peerInfo = peerInfo;
@@ -196,5 +207,5 @@ class RFCListEntry {
 	public void setPeerInfo(PeerInfo peerInfo) {
 		this.peerInfo = peerInfo;
 	}
-	
+
 }

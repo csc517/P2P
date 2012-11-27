@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
@@ -22,8 +21,8 @@ public class LookupRFCMessage implements Message {
 		this.msg_type = msg_type;
 	}
 
-	public LookupRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+	public LookupRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream, BufferedReader br) throws IOException {
+		//BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 		this.br = br;
 		this.msg_type = Utility.MSG_TYPE.LOOKUP;
 		this.inputStream = inputStream;
@@ -117,7 +116,8 @@ public class LookupRFCMessage implements Message {
 		StringBuffer buf = new StringBuffer();
 		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 		
-		Utility.writeInteger(socket, this.msg_type.ordinal());
+//		Utility.writeInteger(socket, this.msg_type.ordinal());
+		buf.append(this.msg_type.ordinal() + EOL);
 		
 		buf.append( "RFC" +
 				DELIMITER +
@@ -130,7 +130,8 @@ public class LookupRFCMessage implements Message {
 		
 		Utility.add_field(buf, "OS", this.getOS());
 		
-		System.out.println("writing buffer:"+buf.toString());
+		System.out.println("Sending packet");
+		System.out.println(buf.toString());
 
 		pw.print(buf);
 		pw.flush();

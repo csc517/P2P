@@ -4,21 +4,35 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-
 public class ListRFCMessage implements Message {
 	
 	Utility.MSG_TYPE msg_type;
 	String data;
 	String host;
 	int port;
+	int rfcNumber;
+	String os;
+	private BufferedReader br;
+	private InputStream inputStream;
 	
+
+	public int getRfcNumber() {
+		return rfcNumber;
+	}
+
+	public void setRfcNumber(int rfcNumber) {
+		this.rfcNumber = rfcNumber;
+	}
 
 	public ListRFCMessage(Utility.MSG_TYPE msg_type) {
 		this.msg_type = msg_type;
 	}
 
-	public ListRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) throws IOException {
-		Utility.read_fields(this, inputStream);
+	public ListRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream, BufferedReader br) throws IOException {
+		//Utility.read_fields(this, inputStream);
+		this.br = br;
+		this.msg_type = Utility.MSG_TYPE.LIST;
+		this.inputStream = inputStream;
 	}
 
 	@Override
@@ -33,7 +47,7 @@ public class ListRFCMessage implements Message {
 
 	@Override
 	public void setOS(String os) {
-		
+		this.os = os;
 	}
 
 	@Override
@@ -78,7 +92,7 @@ public class ListRFCMessage implements Message {
 
 	@Override
 	public String getOS() {
-		return null;
+		return this.os;
 	}
 
 	@Override
@@ -99,20 +113,17 @@ public class ListRFCMessage implements Message {
 	@Override
 	public void send(Socket socket) {
 		StringBuffer buf = new StringBuffer();
-
-		buf.append( this.msg_type +
-				DELIMITER +
+	
+		buf.append( this.msg_type.ordinal() + EOL +
 				"RFC" +
-				DELIMITER +
-				this.data +
 				DELIMITER +
 				VERSION +
 				EOL);
 
-		buf.append(2);	//write number of fields
-		Utility.add_field(buf, "Host", this.getHost());
-		Utility.add_field(buf, "Port", this.getPort());
-
+		buf.append(1 + EOL);	//write number of fields
+		//Utility.add_field(buf, "Host", this.getHost());
+		//Utility.add_field(buf, "Port", this.getPort());
+		Utility.add_field(buf, "OS", this.getOS());
 		try {
 			PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 			pw.print(buf);
@@ -143,12 +154,14 @@ public class ListRFCMessage implements Message {
 	@Override
 	public BufferedReader getBufferedReader() {
 		// TODO Auto-generated method stub
-		return null;
+		return this.br;
 	}
 
 	@Override
 	public void readMessage() throws IOException {
-		// TODO Auto-generated method stub
+		String[] str = br.readLine().split(" ");
+		//this.rfcNumber = Integer.valueOf(str[1]);
+		Utility.read_fields(this, inputStream);
 		
 	}
 

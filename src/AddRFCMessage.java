@@ -22,8 +22,8 @@ public class AddRFCMessage implements Message {
 		this.msg_type = msg_type;
 	}
 
-	public AddRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream) {
-		BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+	public AddRFCMessage(Utility.MSG_TYPE msg_type, InputStream inputStream, BufferedReader br) {
+		//BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 		this.br = br;
 		this.msg_type = Utility.MSG_TYPE.ADD;
 		this.inputStream = inputStream;
@@ -93,8 +93,7 @@ public class AddRFCMessage implements Message {
 		
 		PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
 		
-		Utility.writeInteger(socket, this.msg_type.ordinal());
-
+		buf.append(this.msg_type.ordinal() + EOL);
 		buf.append( "RFC" +
 					DELIMITER +
 					this.rfcNumber +
@@ -110,7 +109,8 @@ public class AddRFCMessage implements Message {
 		Utility.add_field(buf, "Port", this.getPort());
 		Utility.add_field(buf, "Title", this.getTitle());
 		
-		System.out.println("writing buffer:"+buf.toString());
+		if(Peer.debug)
+			System.out.println("writing buffer:" + buf.toString());
 		
 		pw.print(buf);
 		pw.flush();						

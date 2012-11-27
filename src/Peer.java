@@ -15,6 +15,7 @@ public class Peer extends Thread {
 
 	static Object waitObject = new Object();
 	static String workingDir;
+	static boolean debug = true;
 
 	public Peer(ServerSocket serverSocket) {
 		this.serverSocket = serverSocket;
@@ -35,18 +36,18 @@ public class Peer extends Thread {
 					//send the file to requesting host
 					File rfcFile = new File(Utility.getRFCFilename(msg.getRFCNumber()));
 					ResponseRFCMessage response = null;
-					
+
 					if(!rfcFile.exists()) {
 						response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.NOT_FOUND);
 					} else {
-					
+
 						response = new ResponseRFCMessage(Utility.RESPONSE_TYPE.OK);
 					}
-					
+
 					StringBuffer buf = new StringBuffer();
-					
+
 					buf.append(0 + Message.EOL);
-					
+
 					response.setResponseContent(buf);
 					response.sendServerResponse(incomingSocket);
 					System.out.println("Sent response for GET...");
@@ -56,7 +57,7 @@ public class Peer extends Thread {
 						Utility.send_file(incomingSocket, msg.getRFCNumber());
 						System.out.println("Sending file...DONE");
 					}
-					
+
 					incomingSocket.close();
 					break;
 				case ADD:
@@ -103,7 +104,7 @@ public class Peer extends Thread {
 			return msg;
 		}
 	}
-	
+
 	static ServerSocket getServerSocket() {
 		int i = 12345;
 		int tries = 0;
@@ -124,7 +125,7 @@ public class Peer extends Thread {
 	public static void main(String[] args) {
 		try {
 			Peer.workingDir = System.getProperty("user.dir");
-			
+
 			if(args.length >= 1) {
 				if(args[0].charAt(1) == ':') {
 					Peer.workingDir = args[0];
@@ -132,7 +133,7 @@ public class Peer extends Thread {
 					Peer.workingDir = Peer.workingDir + File.separator + args[0];
 				}
 			}
-			
+
 			File dirFile = new File(Peer.workingDir);
 			if(!dirFile.exists()) {
 				dirFile.mkdirs();
@@ -142,9 +143,9 @@ public class Peer extends Thread {
 					System.exit(-1);
 				}
 			}
-			
+
 			System.out.println("RFC Files directory is "+ dirFile.getAbsolutePath());
-			
+
 			int serverPort = Utility.serverPort;
 			String serverHost = "localhost";
 			Socket connectSocket = new Socket(serverHost, serverPort);
@@ -161,31 +162,42 @@ public class Peer extends Thread {
 			Iterator<String> it = files.iterator();
 
 			while(it.hasNext()) {
-				
 				BufferedReader fileReader = new BufferedReader(new FileReader(new File(it.next())));
 
 				String firstLine = fileReader.readLine();
 				if(null == firstLine) {
+					if(debug)
+						System.out.println("skipping file as first line is null");
 					continue;
 				}
 				String[] firstLineArr = firstLine.split(" ");
-				
-				if(firstLineArr.length != 3) {
+
+				if(firstLineArr.length < 3) {
+					if(debug)
+						System.out.println("skipping file as first line is incorrect");
 					continue;
 				}
 
 				int rfcNumber = Integer.parseInt(firstLineArr[1]);
+				int  i = 3;
 				String rfcTitle = firstLineArr[2];
+				while(i < firstLineArr.length)
+				{
+					rfcTitle.concat(firstLineArr[i++]);
+				}
+
 
 				Message msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
-				System.out.println("Server socket port: "+ serverSocket.getLocalPort());
-				System.out.println("Server socket host: "+ serverSocket.getInetAddress().getHostName());
+				//if(debug) {
+				//	System.out.println("Server socket port: "+ serverSocket.getLocalPort());
+				//	System.out.println("Server socket host: "+ serverSocket.getInetAddress().getHostName());
+				//}
 				msg.setPort(serverSocket.getLocalPort());
 				msg.setHost(serverSocket.getInetAddress().getHostName());
 				msg.setRFCNumber(rfcNumber);
 				msg.setTitle(rfcTitle);
 				msg.send(connectSocket);
-				
+
 				acceptResponse(connectSocket);
 
 			}
@@ -200,7 +212,7 @@ public class Peer extends Thread {
 				String [] consoleLinesArr = consoleLine.split(" ");
 
 				if(consoleLinesArr[0].equalsIgnoreCase("LOOKUP")) {
-					
+
 					if(consoleLinesArr.length != 3) {
 						System.out.println("usage: LOOKUP RFC <RFC_NUMBER>");
 						continue;
@@ -216,21 +228,21 @@ public class Peer extends Thread {
 							System.getProperty("os.arch"));
 					msg.setRFCNumber(rfcNumber);
 					msg.send(connectSocket);
-					
+
 					acceptResponse(connectSocket);
 
 				} else if(consoleLinesArr[0].equalsIgnoreCase("GET")) {
-					
+
 					if(consoleLinesArr.length != 5) {
 						System.out.println("usage: GET RFC <RFC_NUMBER> <host> <port>");
 						continue;
 					}
-					
+
 					//GET RFC <RFC_NUMBER> <host> <port>
 					int rfcNumber = Integer.parseInt(consoleLinesArr[2]);
 					String clientHost = consoleLinesArr[3];
 					int clientPort = Integer.parseInt(consoleLinesArr[4]);
-					
+
 					Socket clientConnectSocket = null;
 					try {
 						clientConnectSocket = new Socket(clientHost, clientPort);
@@ -243,9 +255,9 @@ public class Peer extends Thread {
 					msg.setHost("");
 					msg.setRFCNumber(rfcNumber);
 					msg.send(clientConnectSocket);
-					
+
 					Message resMsg = acceptResponse(clientConnectSocket);
-					
+
 					if( ((ResponseRFCMessage)resMsg).getResponseType() == Utility.RESPONSE_TYPE.OK) {
 						String title = Utility.recv_file(clientConnectSocket, resMsg.getBufferedReader());
 						msg = Utility.createMessage(Utility.MSG_TYPE.ADD);
@@ -257,21 +269,21 @@ public class Peer extends Thread {
 
 						acceptResponse(connectSocket);
 					}
-					
+
 					clientConnectSocket.close();
 
 				} else if (consoleLinesArr[0].equalsIgnoreCase("ADD")) {
-					
+
 					if(consoleLinesArr.length != 4) {
 						System.out.println("usage: ADD RFC <RFC_NUMBER> <title>");
 						continue;
 					}
-					
+
 					//[0] [1]    [2]        [3]
 					//ADD RFC <RFC_NUMBER> <title>
 					int rfcNumber = Integer.parseInt(consoleLinesArr[2]);
 					String rfcTitle = consoleLinesArr[3];
-					
+
 					if( !(new File(Utility.getRFCFilename(rfcNumber))).isFile() ) {
 						System.out.println("RFC File not present: " + Utility.getRFCFilename(rfcNumber));
 						continue;
@@ -287,17 +299,20 @@ public class Peer extends Thread {
 					acceptResponse(connectSocket);
 
 				} else if(consoleLinesArr[0].equalsIgnoreCase("LIST")) {
-					
+
 					if(consoleLinesArr.length != 2) {
 						System.out.println("usage: LIST RFC");
 						continue;
 					}
 
-					//LIST RFC
-					/*Message msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
-					msg.send(connectSocket);
-					
-					acceptResponse(connectSocket);*/
+					Message msg = Utility.createMessage(Utility.MSG_TYPE.LIST);
+					msg.setHost("");
+					msg.setOS(System.getProperty("os.name") + " " +
+							System.getProperty("os.version") + " " +
+							System.getProperty("os.arch"));
+					msg.send(connectSocket);			
+					acceptResponse(connectSocket);
+
 
 				} else if(consoleLinesArr[0].equalsIgnoreCase("HELP")) {
 					printCommands();
